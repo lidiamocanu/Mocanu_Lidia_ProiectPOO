@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -57,6 +57,10 @@ public:
         return *this;
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const Laptop& laptop);
+    friend std::istream& operator>>(std::istream& is, Laptop& laptop);
+
+
     std::string getBrand() const { return brand; }
     void setBrand(std::string b) { brand = b; }
     int getRamSize() const { return *ramSize; }
@@ -75,6 +79,17 @@ public:
     friend void compareLaptops(const Laptop& l1, const Laptop& l2);
 };
 int Laptop::totalLaptops = 0;
+
+// Supraincarcarea operatorilor pentru fisier text în afara clasei
+std::ostream& operator<<(std::ostream &os, const Laptop &laptop) {
+    os << laptop.brand << " " << *laptop.ramSize << " " << laptop.id << std::endl;
+    return os;
+}
+
+std::istream& operator>>(std::istream &is, Laptop &laptop) {
+    is >> laptop.brand >> *laptop.ramSize >> const_cast<int&>(laptop.id);
+    return is;
+}
 
 class Smartphone {
 private:
@@ -109,6 +124,10 @@ public:
         return model == other.model && *storageSize == *other.storageSize;
     }
 
+    // Declararea operatorilor pentru lucrul cu fișiere ca funcții prietene
+    friend std::ostream& operator<<(std::ostream& os, const Smartphone& smartphone);
+    friend std::istream& operator>>(std::istream& is, Smartphone& smartphone);
+
     // Supraincarcarea operatorului <<
     friend std::ostream& operator<<(std::ostream& os, const Smartphone& smartphone) {
         os << "Smartphone [Model: " << smartphone.model << ", Storage: " << *smartphone.storageSize << "GB]";
@@ -125,6 +144,7 @@ public:
 
 
     Smartphone& operator=(const Smartphone& other);
+
 
 
     std::string getModel() const { return model; }
@@ -146,6 +166,18 @@ public:
 };
 int Smartphone::totalSmartphones = 0;
 
+
+std::istream& operator>>(std::istream& is, Smartphone& smartphone) {
+    std::string model;
+    int storage;
+
+    is >> model >> storage;
+
+    smartphone.setModel(model);
+    smartphone.setStorageSize(storage);
+
+    return is;
+}
 std::istream& operator>>(std::istream& is, Smartphone& smartphone) {
     std::string model;
     int storage;
@@ -159,7 +191,7 @@ std::istream& operator>>(std::istream& is, Smartphone& smartphone) {
 }
 
 
-// Correct implementation of the copy assignment operator
+// Implementarea operatorului de atribuire prin copiere
 Smartphone& Smartphone::operator=(const Smartphone& other) {
     if (this != &other) {
         model = other.model;
@@ -306,6 +338,65 @@ std::istream& operator>>(std::istream& is, Smartwatch& smartwatch) {
 }
 
 
+class TechStore {
+private:
+    std::string storeName;
+    std::vector<Laptop> laptops;
+    std::vector<Smartphone> smartphones;
+    std::vector<Smartwatch> smartwatches;
+
+public:
+    // Constructor
+    TechStore(std::string name) : storeName(name) {}
+
+    // Get-eri și Set-eri
+    void setStoreName(const std::string& name) { storeName = name; }
+    std::string getStoreName() const { return storeName; }
+
+    void addLaptop(const Laptop& laptop) { laptops.push_back(laptop); }
+    void addSmartphone(const Smartphone& smartphone) { smartphones.push_back(smartphone); }
+    void addSmartwatch(const Smartwatch& smartwatch) { smartwatches.push_back(smartwatch); }
+
+    // Supraincarcarea operatorilor
+    // Operatorul <<
+    friend std::ostream& operator<<(std::ostream &os, const TechStore &store);
+
+    // Operatorul []
+    Laptop& operator[](size_t index) {
+        return laptops.at(index); // Accesul la un laptop din vectorul de laptopuri
+    }
+
+    // Operatorul +=
+    TechStore& operator+=(const Laptop& laptop) {
+        addLaptop(laptop);
+        return *this;
+    }
+
+    // Afisarea stocului
+    void displayStock() const {
+        std::cout << "Stocul magazinului " << storeName << ":\n";
+        std::cout << "Laptopuri:\n";
+        for (const auto& laptop : laptops) {
+            std::cout << laptop << std::endl;
+        }
+        std::cout << "Smartphone-uri:\n";
+        for (const auto& smartphone : smartphones) {
+            std::cout << smartphone << std::endl;
+        }
+        std::cout << "Smartwatch-uri:\n";
+        for (const auto& smartwatch : smartwatches) {
+            std::cout << smartwatch << std::endl;
+        }
+    }
+};
+
+std::ostream& operator<<(std::ostream &os, const TechStore &store) {
+    os << "TechStore: " << store.storeName << "\n";
+    store.displayStock();
+    return os;
+}
+
+
 int main() {
     Laptop l1("Dell", 16, 101);
     Laptop l2("HP", 8, 102);
@@ -419,6 +510,24 @@ int main() {
         }
         std::cout << std::endl;
     }
+
+    // Crearea unui magazin de tehnologie
+    TechStore myStore("Gadget World");
+
+    // Adăugarea produselor în magazin
+    myStore.addLaptop(Laptop("Dell", 16, 101));
+    myStore.addSmartphone(Smartphone("iPhone", 128, 501));
+    myStore.addSmartwatch(Smartwatch("Apple", true, 1));
+
+    // Afisarea stocului magazinului
+    std::cout << myStore;
+
+    // Utilizarea operatorului []
+    std::cout << "Primul laptop din stoc: " << myStore[0] << std::endl;
+
+    // Adaugarea unui nou laptop folosind operatorul +=
+    myStore += Laptop("HP", 8, 102);
+    std::cout << "Dupa adaugarea unui nou laptop:\n" << myStore;
 
     return 0;
 }
